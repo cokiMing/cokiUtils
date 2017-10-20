@@ -32,8 +32,6 @@ public final class LockPool<L> {
         this.expire = expire;
         this.lockManagerKeepAlive = lockManagerKeepAlive;
         this.lockManagerCycle = lockManagerCycle;
-        this.lockManager = createLifeThread();
-        lockManager.start();
     }
 
     public LockPool(long expire, boolean lockManagerKeepAlive) {
@@ -67,10 +65,7 @@ public final class LockPool<L> {
         lockArray.add(unit);
 
         if (!lockManagerKeepAlive) {
-            if (lockManager.getState().equals(Thread.State.TERMINATED)) {
-                lockManager = createLifeThread();
-                lockManager.start();
-            }
+            notifyManager();
         }
         poolLock.unlock();
         return lock;
@@ -119,6 +114,14 @@ public final class LockPool<L> {
                 }
             }
         };
+    }
+
+    private void notifyManager() {
+        if (lockManager == null ||
+                lockManager.getState().equals(Thread.State.TERMINATED)) {
+            lockManager = createLifeThread();
+            lockManager.start();
+        }
     }
 
     /**
