@@ -32,6 +32,7 @@ public final class LockPool<L> {
         this.expire = expire;
         this.lockManagerKeepAlive = lockManagerKeepAlive;
         this.lockManagerCycle = lockManagerCycle;
+        notifyManager();
     }
 
     public LockPool(long expire, boolean lockManagerKeepAlive) {
@@ -39,7 +40,7 @@ public final class LockPool<L> {
     }
 
     public LockPool(long expire) {
-        this(expire,false,2 * expire);
+        this(expire,true,2 * expire);
     }
 
     /**
