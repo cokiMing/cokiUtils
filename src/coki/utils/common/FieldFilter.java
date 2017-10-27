@@ -17,41 +17,29 @@ import java.util.Set;
  */
 public class FieldFilter {
 
-    private Set<String> excludeFields;
-
-    private Set<String> keepFields;
+    private Set<String> fieldSet;
 
     private final Object object;
 
-    public FieldFilter(Object object) {
+    private boolean retain = true;
+
+    private FieldFilter(Object object) {
+        this.fieldSet = new HashSet<>();
         this.object = object;
     }
 
-    /**
-     * 声明不需要保留的字段
-     * @param fields 不需要保留的字段名称
-     * @return 需要保留地
-     */
-    public void exclude(String... fields) {
-        keepCheck();
-        if (excludeFields == null) {
-            excludeFields = new HashSet<>();
-        }
-        Collections.addAll(excludeFields,fields);
+    public static FieldFilter createFilter(Object object) {
+        return new FieldFilter(object);
     }
 
     /**
-     * 声明必须要保留地字段
-     * @param fields 需要保留的字段名称
-     * @return
+     * 声明需要处理的的字段(默认保留)
+     * @param fields 字段名称
+     * @return 需要保留地
      */
-    public void keep(String... fields) {
-        excludeCheck();
-        if (keepFields == null) {
-            keepFields = new HashSet<>();
-        }
-        keepFields = new HashSet<>();
-        Collections.addAll(keepFields,fields);
+    public FieldFilter select(String... fields) {
+        Collections.addAll(fieldSet,fields);
+        return this;
     }
 
     /**
@@ -68,16 +56,23 @@ public class FieldFilter {
             if (name.startsWith("get")) {
                 String temp = name.substring(3);
                 String fieldName = isUpperCase(temp)?temp : temp.replace(temp.charAt(0),(char)(temp.charAt(0) + 'z' - 'Z'));
-                if (excludeFields != null && !excludeFields.contains(fieldName)) {
-                    putResult(result,method,fieldName);
-                }
-                if (keepFields != null && keepFields.contains(fieldName)) {
+                if (fieldSet.contains(fieldName) == retain ) {
                     putResult(result,method,fieldName);
                 }
             }
         }
 
         return result;
+    }
+
+    /**
+     * 反转，将保留字段设置为剔除字段
+     * 或将剔除字段设置为保留字段。
+     * @return
+     */
+    public FieldFilter reverse() {
+        retain = !retain;
+        return this;
     }
 
     private boolean isUpperCase(String field) {
@@ -92,18 +87,6 @@ public class FieldFilter {
         return isUpperCase;
     }
 
-    private void keepCheck() {
-        if (keepFields != null) {
-            throw new RuntimeException("can't use both 'keep' and 'exclude' at the same time !");
-        }
-    }
-
-    private void excludeCheck() {
-        if (excludeFields != null) {
-            throw new RuntimeException("can't use both 'keep' and 'exclude' at the same time !");
-        }
-    }
-
     private void putResult(JSONObject jsonObject,Method method, String fieldName)
             throws InvocationTargetException, IllegalAccessException {
         Object res = method.invoke(object);
@@ -111,4 +94,5 @@ public class FieldFilter {
             jsonObject.put(fieldName,res);
         }
     }
+
 }
