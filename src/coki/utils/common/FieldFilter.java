@@ -11,16 +11,12 @@ import java.util.Set;
 
 /**
  * 适用于拥有标准的get、set方法的bean
- * 对于该对象来说，只能使用keep或exclude方法两者之一,
- * 否则会抛出异常
  * Created by wuyiming on 2017/10/24.
  */
 public class FieldFilter {
 
-    private Set<String> fieldSet;
-
     private final Object object;
-
+    private Set<String> fieldSet;
     private boolean retain = true;
 
     private FieldFilter(Object object) {
@@ -34,16 +30,18 @@ public class FieldFilter {
 
     /**
      * 声明需要处理的的字段(默认保留)
+     *
      * @param fields 字段名称
      * @return 需要保留地
      */
     public FieldFilter select(String... fields) {
-        Collections.addAll(fieldSet,fields);
+        Collections.addAll(fieldSet, fields);
         return this;
     }
 
     /**
      * 根据字段筛选后的结果创建一个JSON对象
+     *
      * @return
      * @throws InvocationTargetException
      * @throws IllegalAccessException
@@ -55,9 +53,9 @@ public class FieldFilter {
             String name = method.getName();
             if (name.startsWith("get")) {
                 String temp = name.substring(3);
-                String fieldName = isUpperCase(temp)?temp : temp.replace(temp.charAt(0),(char)(temp.charAt(0) + 'z' - 'Z'));
-                if (fieldSet.contains(fieldName) == retain ) {
-                    putResult(result,method,fieldName);
+                String fieldName = isUpperCase(temp) ? temp : temp.replace(temp.charAt(0), (char) (temp.charAt(0) + 'z' - 'Z'));
+                if (fieldSet.contains(fieldName) == retain) {
+                    putResult(result, method, fieldName);
                 }
             }
         }
@@ -68,6 +66,7 @@ public class FieldFilter {
     /**
      * 反转，将保留字段设置为剔除字段
      * 或将剔除字段设置为保留字段。
+     *
      * @return
      */
     public FieldFilter reverse() {
@@ -78,7 +77,7 @@ public class FieldFilter {
     private boolean isUpperCase(String field) {
         boolean isUpperCase = true;
         for (char c : field.toCharArray()) {
-            if ( c >= 'a' && c <= 'z') {
+            if (c >= 'a' && c <= 'z') {
                 isUpperCase = false;
                 break;
             }
@@ -87,11 +86,11 @@ public class FieldFilter {
         return isUpperCase;
     }
 
-    private void putResult(JSONObject jsonObject,Method method, String fieldName)
+    private void putResult(JSONObject jsonObject, Method method, String fieldName)
             throws InvocationTargetException, IllegalAccessException {
         Object res = method.invoke(object);
         if (res != null) {
-            jsonObject.put(fieldName,res);
+            jsonObject.put(fieldName, res);
         }
     }
 
