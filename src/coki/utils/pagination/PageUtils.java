@@ -13,7 +13,7 @@ public class PageUtils {
 
     }
 
-    public static List pagination(List list, Page page) {
+    public static List pagination(List<?> list, Page page) {
         return pagination(list, page.getPageNo(), page.getPageSize());
     }
 
@@ -25,7 +25,7 @@ public class PageUtils {
      * @param pageSize 每页记录数
      * @return 分页后的数组
      */
-    public static List pagination(List list, int pageNo, int pageSize) {
+    public static List pagination(List<?> list, int pageNo, int pageSize) {
         if (pageNo < 1) {
             pageNo = 1;
         }
