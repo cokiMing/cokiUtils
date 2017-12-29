@@ -3,20 +3,23 @@ package coki.utils.common;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * @author wuyiming
  * 适用于拥有标准的get、set方法的bean
  * Created by wuyiming on 2017/10/24.
  */
 public class FieldFilter {
 
+    /**需要处理的对象*/
     private final Object object;
+    /**过滤的字段集合*/
     private Set<String> fieldSet;
+    /**保留标识*/
     private boolean retain = true;
 
     private FieldFilter(Object object) {
@@ -24,18 +27,18 @@ public class FieldFilter {
         this.object = object;
     }
 
-    public static FieldFilter createFilter(Object object) {
+    public static FieldFilter object(Object object) {
         return new FieldFilter(object);
     }
 
     /**
      * 声明需要处理的的字段(默认保留)
      *
-     * @param fields 字段名称
+     * @param fieldNames 字段名称
      * @return 需要保留地
      */
-    public FieldFilter select(String... fields) {
-        Collections.addAll(fieldSet, fields);
+    public FieldFilter select(String... fieldNames) {
+        Collections.addAll(fieldSet, fieldNames);
         return this;
     }
 
@@ -43,21 +46,20 @@ public class FieldFilter {
      * 根据字段筛选后的结果创建一个JSON对象
      *
      * @return
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
      */
-    public JSON buildResult() throws InvocationTargetException, IllegalAccessException {
-        Method[] declaredMethods = object.getClass().getDeclaredMethods();
+    public JSON buildResult() {
         JSONObject result = new JSONObject();
-        for (Method method : declaredMethods) {
-            String name = method.getName();
-            if (name.startsWith("get")) {
-                String temp = name.substring(3);
-                String fieldName = isUpperCase(temp) ? temp : temp.replace(temp.charAt(0), (char) (temp.charAt(0) + 'z' - 'Z'));
+        Field[] fields = object.getClass().getDeclaredFields();
+        try {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
                 if (fieldSet.contains(fieldName) == retain) {
-                    putResult(result, method, fieldName);
+                    result.put(fieldName,field.get(object));
                 }
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         return result;
@@ -72,26 +74,6 @@ public class FieldFilter {
     public FieldFilter reverse() {
         retain = !retain;
         return this;
-    }
-
-    private boolean isUpperCase(String field) {
-        boolean isUpperCase = true;
-        for (char c : field.toCharArray()) {
-            if (c >= 'a' && c <= 'z') {
-                isUpperCase = false;
-                break;
-            }
-        }
-
-        return isUpperCase;
-    }
-
-    private void putResult(JSONObject jsonObject, Method method, String fieldName)
-            throws InvocationTargetException, IllegalAccessException {
-        Object res = method.invoke(object);
-        if (res != null) {
-            jsonObject.put(fieldName, res);
-        }
     }
 
 }

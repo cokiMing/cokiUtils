@@ -30,7 +30,7 @@ public final class ScheduleCache<K,V> {
     public V get(K key) {
         checkExpire();
         Unit<V> unit = map.get(key);
-        return unit.content;
+        return unit == null ? null:unit.content;
     }
 
     private synchronized void checkExpire() {
@@ -51,5 +51,13 @@ public final class ScheduleCache<K,V> {
     private static class Unit<V> {
         private V content;
         private long deadline;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        ScheduleCache<String,String> cache = new ScheduleCache<>(1000);
+        cache.put("123","456");
+        System.out.println(cache.get("123"));
+        Thread.sleep(1500);
+        System.out.println(cache.get("123"));
     }
 }
