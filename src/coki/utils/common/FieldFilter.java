@@ -10,7 +10,6 @@ import java.util.Set;
 
 /**
  * @author wuyiming
- * 适用于拥有标准的get、set方法的bean
  * Created by wuyiming on 2017/10/24.
  */
 public class FieldFilter {
@@ -27,6 +26,11 @@ public class FieldFilter {
         this.object = object;
     }
 
+    /**
+     * 设置要处理的对象
+     * @param object
+     * @return
+     */
     public static FieldFilter object(Object object) {
         return new FieldFilter(object);
     }

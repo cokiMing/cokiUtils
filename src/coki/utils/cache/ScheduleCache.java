@@ -52,12 +52,4 @@ public final class ScheduleCache<K,V> {
         private V content;
         private long deadline;
     }
-
-    public static void main(String[] args) throws InterruptedException {
-        ScheduleCache<String,String> cache = new ScheduleCache<>(1000);
-        cache.put("123","456");
-        System.out.println(cache.get("123"));
-        Thread.sleep(1500);
-        System.out.println(cache.get("123"));
-    }
 }
