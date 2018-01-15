@@ -116,11 +116,11 @@ public class MailManager {
         private List<String> fileLocations;
         private Properties mailConfig;
 
-        public Server(String account, String password, String smtpHost) {
+        private Server(String account, String password, String smtpHost) {
             this(account,password,smtpHost,account);
         }
 
-        public Server(String account, String password, String smtpHost, String name) {
+        private Server(String account, String password, String smtpHost, String name) {
             this.account = account;
             this.password = password;
             this.smtpHost = smtpHost;
