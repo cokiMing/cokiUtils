@@ -14,9 +14,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author wuyiming
@@ -31,11 +29,22 @@ public class MailManager {
             "系统账号"
     );
 
+    private final static String CHARSET = "UTF-8";
+
     public static Server createMailServer(String account,String password,String smtpHost) {
         return new Server(account,password,smtpHost);
     }
 
-    private static MimeMessage createMimeMessage(Session session,String name, String subject,String content, String sendMail, List<String> receiveMails, List<String> fileLocations) throws Exception {
+    private static MimeMessage createMimeMessage(
+            Session session,
+            String name,
+            String subject,
+            String content,
+            String sendMail,
+            List<String> recipients,
+            List<String> ccRecipients,
+            List<String> bccRecipients,
+            List<String> fileLocations) throws Exception {
         // 1. 创建一封邮件
         MimeMessage message = new MimeMessage(session);
 
@@ -43,8 +52,22 @@ public class MailManager {
         message.setFrom(new InternetAddress(sendMail, name, "UTF-8"));
 
         // 3. To: 收件人（可以增加多个收件人、抄送、密送）
-        for (String receiveMail : receiveMails) {
-            message.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(receiveMail, receiveMail, "UTF-8"));
+        if (recipients != null) {
+            for (String receiveMail : recipients) {
+                message.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(receiveMail, receiveMail, CHARSET));
+            }
+        }
+
+        if (ccRecipients != null) {
+            for (String receiveMail : ccRecipients) {
+                message.addRecipient(MimeMessage.RecipientType.CC, new InternetAddress(receiveMail, receiveMail, CHARSET));
+            }
+        }
+
+        if (bccRecipients != null) {
+            for (String receiveMail : bccRecipients) {
+                message.addRecipient(MimeMessage.RecipientType.BCC, new InternetAddress(receiveMail, receiveMail, CHARSET));
+            }
         }
 
         // 4. Subject: 邮件主题
@@ -88,6 +111,9 @@ public class MailManager {
         private String password;
         private String smtpHost;
         private String name;
+        private List<String> ccRecipients;
+        private List<String> bccRecipients;
+        private List<String> fileLocations;
         private Properties mailConfig;
 
         public Server(String account, String password, String smtpHost) {
@@ -105,17 +131,62 @@ public class MailManager {
             mailConfig.setProperty("mail.smtp.auth", "true");
         }
 
-        public Server serverName(String name) {
+        /**
+         * 发件人名称
+         * @param name
+         * @return
+         */
+        public Server senderName(String name) {
             this.name = name;
             return this;
         }
 
-        public boolean sendMail(String content, String subject, List<String> receivers,List<String> fileLocations) {
+        /**
+         * 抄送
+         * @param ccRecipients
+         * @return
+         */
+        public Server carbonCopy(List<String> ccRecipients) {
+            this.ccRecipients = ccRecipients;
+            return this;
+        }
+
+        /**
+         * 秘密抄送
+         * @param bccRecipients
+         * @return
+         */
+        public Server blindcarbonCopy(List<String> bccRecipients) {
+            this.bccRecipients = bccRecipients;
+            return this;
+        }
+
+        /**
+         * 附件
+         * @param fileLocations
+         * @return
+         */
+        public Server attachment(List<String> fileLocations) {
+            this.fileLocations = fileLocations;
+            return this;
+        }
+
+        public boolean sendMail(String content, String subject, List<String> receivers) {
             Session session = Session.getInstance(mailConfig);
             session.setDebug(true);
             Transport transport = null;
             try {
-                MimeMessage mimeMessage = createMimeMessage(session,name, subject,content,account,receivers,fileLocations);
+                MimeMessage mimeMessage = createMimeMessage(
+                        session,
+                        name,
+                        subject,
+                        content,
+                        account,
+                        receivers,
+                        ccRecipients,
+                        bccRecipients,
+                        fileLocations
+                );
                 transport = session.getTransport();
                 transport.connect(account, password);
                 transport.sendMessage(mimeMessage, mimeMessage.getAllRecipients());
