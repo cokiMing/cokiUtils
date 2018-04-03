@@ -92,6 +92,50 @@ public class CollectionUtils {
         return map;
     }
 
+    /**
+     * 查看集合是否为空
+     * @param collection
+     * @return
+     */
+    public static boolean isEmpty(Collection collection) {
+        return collection == null || collection.size() == 0;
+    }
+
+    /**
+     * 查看集合是否不为空
+     * @param collection
+     * @return
+     */
+    public static boolean isNotEmpty(Collection collection) {
+        return !isEmpty(collection);
+    }
+
+    /***
+     * 查看两个集合内的成员是否相等
+     * @param collection1
+     * @param collection2
+     * @return
+     */
+    public static boolean isEqual(Collection<String> collection1,Collection<String> collection2) {
+        if (collection1 == collection2) {
+            return true;
+        }
+
+        if (collection1 == null || collection2 == null) {
+            return false;
+        }
+
+        if (collection1.size() != collection2.size()) {
+            return false;
+        }
+
+        for (String s : collection2) {
+            collection1.remove(s);
+        }
+
+        return collection1.size() == 0;
+    }
+
     @SuppressWarnings("unchecked")
     private static <T,E> void putElement(
             Collection<E> collection,
