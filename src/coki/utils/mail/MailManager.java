@@ -5,10 +5,7 @@ import sun.misc.BASE64Encoder;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -26,13 +23,22 @@ public class MailManager {
             "january.4th@163.com",
             "wym081656",
             "smtp.163.com",
-            "系统账号"
+            "系统账号",
+            "25"
+    );
+
+    public final static Server GMAIL_SERVER = new Server(
+            "windforceisready@gmail.com",
+            "ibxhxyqgokmshduy",
+            "smtp.gmail.com",
+            "系统账号",
+            "587"
     );
 
     private final static String CHARSET = "UTF-8";
 
-    public static Server createMailServer(String account,String password,String smtpHost) {
-        return new Server(account,password,smtpHost);
+    public static Server createMailServer(String account,String password,String smtpHost,String port) {
+        return new Server(account,password,smtpHost,port);
     }
 
     private static MimeMessage createMimeMessage(
@@ -73,25 +79,27 @@ public class MailManager {
         // 4. Subject: 邮件主题
         message.setSubject(subject, "UTF-8");
 
-        // 5. Content: 邮件正文
-        message.setContent(content, "text/html;charset=UTF-8");
-
-        // 6. 添加附件
+        // 5. 添加附件
         if (fileLocations != null) {
-            message.setContent(setMultipart(fileLocations));
+            message.setContent(setMultipart(content,fileLocations));
         }
 
-        // 7. 设置发件时间
+        // 6. 设置发件时间
         message.setSentDate(new Date());
 
-        // 8. 保存设置
+        // 7. 保存设置
         message.saveChanges();
 
         return message;
     }
 
-    private static Multipart setMultipart(List<String> fileLocations) throws Exception {
+    private static Multipart setMultipart(String content, List<String> fileLocations) throws Exception {
         Multipart multipart = new MimeMultipart();
+        if (content != null) {
+            BodyPart contentPart = new MimeBodyPart();
+            contentPart.setContent(content, "text/html; charset=utf-8");
+            multipart.addBodyPart(contentPart);
+        }
         for (String fileLocation : fileLocations) {
             File file = new File(fileLocation);
             MimeBodyPart fileBody = new MimeBodyPart();
@@ -110,17 +118,18 @@ public class MailManager {
         private String account;
         private String password;
         private String smtpHost;
+        private String port;
         private String name;
         private List<String> ccRecipients;
         private List<String> bccRecipients;
         private List<String> fileLocations;
         private Properties mailConfig;
 
-        private Server(String account, String password, String smtpHost) {
-            this(account,password,smtpHost,account);
+        private Server(String account, String password, String smtpHost,String port) {
+            this(account,password,smtpHost,account,port);
         }
 
-        private Server(String account, String password, String smtpHost, String name) {
+        private Server(String account, String password, String smtpHost, String name, String port) {
             this.account = account;
             this.password = password;
             this.smtpHost = smtpHost;
@@ -129,6 +138,10 @@ public class MailManager {
             mailConfig.setProperty("mail.transport.protocol", "smtp");
             mailConfig.setProperty("mail.smtp.host", smtpHost);
             mailConfig.setProperty("mail.smtp.auth", "true");
+            if (port != null) {
+                mailConfig.setProperty("mail.smtp.port",port);
+            }
+            mailConfig.setProperty("mail.smtp.starttls.enable", "true");
         }
 
         /**
